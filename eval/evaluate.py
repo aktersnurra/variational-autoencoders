@@ -9,7 +9,7 @@ import torch
 from torch.autograd import Variable
 import utils
 import model.net as net
-import model.data_loader as data_loader
+import data_loaders.mnist_data_loader as data_loader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/64x64_SIGNS', help="Directory containing the dataset")

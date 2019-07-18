@@ -45,7 +45,7 @@ def fetch_dataloader(types, data_dir, download, params):
                                                        transform=transforms.Compose([
                                                            transforms.ToTensor(),
                                                            transforms.Normalize((0.1307,),
-                                                                                (0.3081)),
+                                                                                (0.3081,)),
                                                        ])),
                                 batch_size=params.batch_size,
                                 shuffle=True,
@@ -58,7 +58,7 @@ def fetch_dataloader(types, data_dir, download, params):
                                                        transform=transforms.Compose([
                                                            transforms.ToTensor(),
                                                            transforms.Normalize((0.1307,),
-                                                                                (0.3081)),
+                                                                                (0.3081,)),
                                                        ])),
                                 batch_size=params.batch_size,
                                 shuffle=True,

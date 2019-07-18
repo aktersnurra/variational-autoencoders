@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 import utils
 import model.net as net
-import model.data_loader as data_loader
+import data_loaders.mnist_data_loader as data_loader
 from eval.evaluate import evaluate
 
 parser = argparse.ArgumentParser()
