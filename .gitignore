@@ -103,4 +103,18 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+!data/
+data/*
+!data/.gitkeep
+.idea
 
+!experiments/
+experiments/*
+!experiments/.gitkeep
+!experiments/fully_connected
+experiments/fully_connected/*
+!experiments/fully_connected/params.json
+
+!experiments/convolutional
+experiments/convolutional/*
+!experiments/convolutional/params.json
