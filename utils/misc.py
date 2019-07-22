@@ -4,10 +4,8 @@ import os
 import shutil
 
 import torch
-import torch.nn.functional as F
 from torch import nn
-from torch.autograd import Variable
-
+from texttable import Texttable
 
 class Params():
     """Class that loads hyperparameters from a json file.
@@ -15,8 +13,8 @@ class Params():
     Example:
     ```
     params = Params(json_path)
-    print(params.learning_rate)
-    params.learning_rate = 0.5  # change the value of learning_rate in params
+    print(params.fully_connected)
+    params.fully_connected = 0.5  # change the value of fully_connected in params
     ```
     """
 
@@ -37,7 +35,7 @@ class Params():
 
     @property
     def dict(self):
-        """Gives dict-like access to Params instance by `params.dict['learning_rate']"""
+        """Gives dict-like access to Params instance by `params.dict['fully_connected']"""
         return self.__dict__
 
 
@@ -106,7 +104,7 @@ def save_dict_to_json(d, json_path):
         json.dump(d, f, indent=4)
 
 
-def save_checkpoint(state, is_best, checkpoint):
+def save_checkpoint(state, is_best, checkpoint, verbose=False):
     """Saves model and training parameters at checkpoint + 'last.pth.tar'. If is_best==True, also saves
     checkpoint + 'best.pth.tar'
 
@@ -114,13 +112,16 @@ def save_checkpoint(state, is_best, checkpoint):
         state: (dict) contains model's state_dict, may contain other keys such as epoch, optimizer state_dict
         is_best: (bool) True if it is the best model seen till now
         checkpoint: (string) folder where parameters are to be saved
+        verbose: (bool) print out if checkpoint is made or not
     """
     filepath = os.path.join(checkpoint, 'last.pth.tar')
     if not os.path.exists(checkpoint):
-        print("Checkpoint Directory does not exist! Making directory {}".format(checkpoint))
+        if verbose:
+            print("Checkpoint Directory does not exist! Making directory {}".format(checkpoint))
         os.mkdir(checkpoint)
     else:
-        print("Checkpoint Directory exists! ")
+        if verbose:
+            print("Checkpoint Directory exists! ")
     torch.save(state, filepath)
     if is_best:
         shutil.copyfile(filepath, os.path.join(checkpoint, 'best.pth.tar'))
@@ -148,15 +149,29 @@ def load_checkpoint(checkpoint, model, optimizer=None):
 
 def initialize_weights(*models):
     """
-    borrowed from: https://github.com/aktersnurra/pytorch-semantic-segmentation/blob/master/utils/misc.py
+    Code referenced from https://github.com/zijundeng/pytorch-semantic-segmentation
 
     """
     for model in models:
         for module in model.modules():
             if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
-                nn.init.kaiming_normal(module.weight)
+                nn.init.kaiming_normal_(module.weight)
                 if module.bias is not None:
                     module.bias.data.zero_()
             elif isinstance(module, nn.BatchNorm2d):
                 module.weight.data.fill_(1)
                 module.bias.data.zero_()
+
+
+def tab_printer(args):
+    args = vars(args)
+    keys = sorted(args.keys())
+    t = Texttable()
+    t.add_rows([["Parameter", "Value"]] + [[k.replace("_", " ").capitalize(), args[k]] for k in keys])
+    print(t.draw())
+
+
+def create_dir(dir):
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+

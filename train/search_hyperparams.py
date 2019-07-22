@@ -10,7 +10,7 @@ import utils
 
 PYTHON = sys.executable
 parser = argparse.ArgumentParser()
-parser.add_argument('--parent_dir', default='experiments/learning_rate',
+parser.add_argument('--parent_dir', default='experiments/fully_connected',
                     help='Directory containing params.json')
 parser.add_argument('--data_dir', default='data/64x64_SIGNS', help="Directory containing the dataset")
 
