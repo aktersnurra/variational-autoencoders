@@ -12,13 +12,17 @@ class InferenceNetwork(nn.Module):
         self.fc_mu = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.hidden_dim[1])
         self.fc_logvar = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.hidden_dim[1])
         self.activation_fn = GELU()
+        self.batch_norm_h = nn.BatchNorm1d(self.params.hidden_dim[0])
+        self.batch_norm_mu = nn.BatchNorm1d(self.params.hidden_dim[1])
+        self.batch_norm_logvar = nn.BatchNorm1d(self.params.hidden_dim[1])
+
         initialize_weights(self)
 
     def forward(self, x):
         x = x.view(-1, self.params.input_dim)
-        h1 = self.activation_fn(self.fc(x))
-        mu = self.activation_fn(self.fc_mu(h1))
-        logvar = self.activation_fn(self.fc_logvar(h1))
+        h1 = self.batch_norm_h(self.activation_fn(self.fc(x)))
+        mu = self.batch_norm_mu(self.activation_fn(self.fc_mu(h1)))
+        logvar = self.batch_norm_logvar(self.activation_fn(self.fc_logvar(h1)))
         return mu, logvar
 
 
@@ -29,10 +33,11 @@ class GenerativeNetwork(nn.Module):
         self.fc1 = nn.Linear(in_features=self.params.hidden_dim[1], out_features=self.params.hidden_dim[0])
         self.fc2 = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.input_dim)
         self.activation_fn = GELU()
+        self.batch_norm = nn.BatchNorm1d(self.params.hidden_dim[0])
         initialize_weights(self)
 
     def forward(self, z):
-        h3 = self.activation_fn(self.fc1(z))
+        h3 = self.batch_norm(self.activation_fn(self.fc1(z)))
         out = torch.sigmoid(self.fc2(h3))
         return out
 

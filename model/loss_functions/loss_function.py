@@ -15,7 +15,9 @@ def loss_function(x, x_reconstructed, mu, logvar, batch_size, img_size=784):
     # D_{KL} = 0.5 \cdot \sum(1 + logvar - \mu^2 - \sigma^2)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return BCE + KLD
+    loss = BCE + KLD
+
+    return {'loss': loss, 'KLD': KLD, 'BCE': BCE}
 
 
 

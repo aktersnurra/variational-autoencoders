@@ -3,6 +3,7 @@ import logging
 import os
 import torch
 import sys
+from datetime import datetime
 import torch.optim as optim
 from tqdm import tqdm, trange
 from tensorboardX import SummaryWriter
@@ -34,7 +35,9 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, restore_file
 
     logging.info("\nTraining started.\n")
     # Add tensorboardX SummeryWriter to log training, logs will be save in model_dir directory
-    log_dir = os.path.join(model_dir, 'runs')
+    run_dir = os.path.join(model_dir, 'runs')
+    create_dir(run_dir)
+    log_dir = os.path.join(run_dir, datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     create_dir(log_dir)
     with SummaryWriter(log_dir) as writer:
         # set model to training mode
@@ -63,7 +66,8 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, restore_file
 
                 # compute model output and loss
                 X_reconstructed, mu, logvar = model(train_batch)
-                loss = loss_fn(train_batch, X_reconstructed, mu, logvar, params.batch_size)
+                losses = loss_fn(train_batch, X_reconstructed, mu, logvar, params.batch_size)
+                loss = losses['loss']
                 # loss /= len(train_batch)
 
                 # clear previous gradients, compute gradients of all variables wrt loss
@@ -82,10 +86,10 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, restore_file
                         writer.add_histogram(tag+'/grad', value.grad.cpu().data.numpy(), j)
 
                 # Compute the loss for each iteration
-                summary_batch = {'loss': loss.item()}
+                summary_batch = losses
                 # log loss and/or other metrics to the writer
                 for tag, value in summary_batch.items():
-                    writer.add_scalar(tag, value, j)
+                    writer.add_scalar(tag, value.item(), j)
 
                 # update the average loss
                 training_progressor.set_description("VAE (Loss=%g)" % round(loss.item() / len(train_batch), 4))
@@ -138,10 +142,20 @@ if __name__ == '__main__':
 
     # Define the model and optimizer
     if 'fully_connected' in args.model_dir:
-        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoEncoder
+        # Fetch the model
+        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoencoder
+        # Fetch loss function
+        from model.loss_functions.loss_function import loss_function
+        loss_fn = loss_function
+    elif 'fully_connected_w_bn' in args.model_dir:
+        from model.fully_connected_VAE_w_BN.variational_autoencoder import VariationalAutoencoder
+        # Fetch loss function
+        from model.loss_functions.loss_function import loss_function
+        loss_fn = loss_function
+
 
     # Load the VAE model
-    model = VariationalAutoEncoder(params).cuda() if params.cuda else VariationalAutoEncoder(params)
+    model = VariationalAutoencoder(params).cuda() if params.cuda else VariationalAutoencoder(params)
 
     # Use the Adam optimizer
     optimizer = optim.Adam(model.parameters(),
@@ -149,10 +163,6 @@ if __name__ == '__main__':
                            eps=params.esp,
                            betas=(params.betas[0], params.betas[1]),
                            weight_decay=params.weight_decay)
-
-    # Fetch loss function
-    from model.fully_connected_VAE.loss_function import loss_function
-    loss_fn = loss_function
 
     # Train the model
     train(model, train_dl, optimizer, loss_fn, params, model_dir, args.restore_file)

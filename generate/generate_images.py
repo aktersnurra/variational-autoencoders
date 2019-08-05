@@ -50,18 +50,17 @@ def generate_images(model, dataloader, params):
     log_dir = os.path.join(model_dir, 'runs')
     misc.create_dir(log_dir)
     with torch.no_grad() and SummaryWriter(log_dir) as writer:
-        for i, (train_batch, _) in enumerate(dataloader):
+        for i, (test_batch, _) in enumerate(dataloader):
             # move to GPU if available
             if params.cuda:
-                train_batch = train_batch.cuda()
+                test_batch = test_batch.cuda()
             # compute model output and loss
-            X_reconstructed, mu, logvar = model(train_batch)
+            X_reconstructed, mu, logvar = model(test_batch)
 
-            if i % 100 == 0:
+            if i % 31 == 0:
                 X_reconstructed = X_reconstructed.view(params.batch_size, 1, 28, 28).cpu()
                 images = torchvision.utils.make_grid(X_reconstructed)
                 writer.add_image("Generated_images", images, i)
-
 
 
 if __name__=='__main__':
@@ -98,9 +97,9 @@ if __name__=='__main__':
 
     # Define the model and optimizer
     if 'fully_connected' in args.model_dir:
-        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoEncoder
+        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoencoder
 
-    model = VariationalAutoEncoder(params).cuda() if params.cuda else VariationalAutoEncoder(params)
+    model = VariationalAutoencoder(params).cuda() if params.cuda else VariationalAutoencoder(params)
     # Reload weights from the saved file
     misc.load_checkpoint(os.path.join(root, args.model_dir, args.restore_file + '.pth.tar'), model)
     # Generate images
