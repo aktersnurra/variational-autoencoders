@@ -111,9 +111,9 @@ data/*
 !experiments/
 experiments/*
 !experiments/.gitkeep
-!experiments/fully_connected
-experiments/fully_connected/*
-!experiments/fully_connected/params.json
+!experiments/vae
+experiments/vae/*
+!experiments/vae/params.json
 
 !experiments/convolutional
 experiments/convolutional/*

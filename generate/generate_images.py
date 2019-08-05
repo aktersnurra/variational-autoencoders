@@ -96,8 +96,8 @@ if __name__=='__main__':
     test_dl = dataloaders['test']
 
     # Define the model and optimizer
-    if 'fully_connected' in args.model_dir:
-        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoencoder
+    if 'vae' in args.model_dir:
+        from model.VAE.variational_autoencoder import VariationalAutoencoder
 
     model = VariationalAutoencoder(params).cuda() if params.cuda else VariationalAutoencoder(params)
     # Reload weights from the saved file

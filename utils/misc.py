@@ -13,8 +13,8 @@ class Params():
     Example:
     ```
     params = Params(json_path)
-    print(params.fully_connected)
-    params.fully_connected = 0.5  # change the value of fully_connected in params
+    print(params.vae)
+    params.vae = 0.5  # change the value of vae in params
     ```
     """
 
@@ -35,7 +35,7 @@ class Params():
 
     @property
     def dict(self):
-        """Gives dict-like access to Params instance by `params.dict['fully_connected']"""
+        """Gives dict-like access to Params instance by `params.dict['vae']"""
         return self.__dict__
 
 

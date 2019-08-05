@@ -141,14 +141,14 @@ if __name__ == '__main__':
     train_dl = dataloaders['train']
 
     # Define the model and optimizer
-    if 'fully_connected' in args.model_dir:
+    if args.model_dir.split('/')[-1] == 'vae':
         # Fetch the model
-        from model.fully_connected_VAE.variational_autoencoder import VariationalAutoencoder
+        from model.VAE.variational_autoencoder import VariationalAutoencoder
         # Fetch loss function
         from model.loss_functions.loss_function import loss_function
         loss_fn = loss_function
-    elif 'fully_connected_w_bn' in args.model_dir:
-        from model.fully_connected_VAE_w_BN.variational_autoencoder import VariationalAutoencoder
+    elif args.model_dir.split('/')[-1] == 'vae_w_bn':
+        from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
         # Fetch loss function
         from model.loss_functions.loss_function import loss_function
         loss_fn = loss_function

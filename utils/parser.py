@@ -20,7 +20,7 @@ def argument_parser():
 
     parser.add_argument('--model_dir',
                         nargs="?",
-                        default='experiments/fully_connected',
+                        default='experiments/vae',
                         help="Directory containing params.json")
 
     parser.add_argument('--restore_file',
