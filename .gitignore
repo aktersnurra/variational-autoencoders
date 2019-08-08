@@ -134,9 +134,9 @@ experiments/vae_w_bn/runs/*/generated_images/*
 experiments/convolutional/*
 !experiments/convolutional/params.json
 !experiments/convolutional/runs
-experiments/convolutional/runs/*/*
-!experiments/convolutional/runs/*/*/generated_images
-experiments/convolutional/runs/*/*/generated_images/*
-!experiments/convolutional/runs/*/*/generated_images/*.gif
+experiments/convolutional/runs/*/*.kompjuter
+!experiments/convolutional/runs/*/generated_images
+experiments/convolutional/runs/*/generated_images/*
+!experiments/convolutional/runs/*/generated_images/*.gif
 
 
