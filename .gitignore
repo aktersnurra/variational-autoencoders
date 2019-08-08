@@ -114,7 +114,7 @@ experiments/*
 !experiments/vae
 experiments/vae/*
 !experiments/vae/params.json
-!experiments/vae/runs/*
+!experiments/vae/runs
 experiments/vae/runs/*/*
 !experiments/vae/runs/*/*/generated_images
 experiments/vae/runs/*/*/generated_images/*
@@ -123,7 +123,7 @@ experiments/vae/runs/*/*/generated_images/*
 !experiments/vae_w_bn
 experiments/vae_w_bn/*
 !experiments/vae_w_bn/params.json
-!experiments/vae_w_bn/runs/*
+!experiments/vae_w_bn/runs
 experiments/vae_w_bn/runs/*/*
 !experiments/vae_w_bn/runs/*/*/generated_images
 experiments/vae_w_bn/runs/*/*/generated_images/*
@@ -132,7 +132,7 @@ experiments/vae_w_bn/runs/*/*/generated_images/*
 !experiments/convolutional
 experiments/convolutional/*
 !experiments/convolutional/params.json
-!experiments/convolutional/runs/*
+!experiments/convolutional/runs
 experiments/convolutional/runs/*/*
 !experiments/convolutional/runs/*/*/generated_images
 experiments/convolutional/runs/*/*/generated_images/*
