@@ -32,5 +32,9 @@ def argument_parser():
                         default='mnist',
                         help='Specify the dataloader to use')
 
+    parser.add_argument('--mse_loss',
+                        action="store_true",
+                        help="Optional, use the MSE loss instead of the BCE loss")
+
     return parser.parse_args()
 

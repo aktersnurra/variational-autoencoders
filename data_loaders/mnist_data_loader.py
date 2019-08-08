@@ -19,7 +19,7 @@ def fetch_dataloader(types, data_dir, download, params):
     download: bool
         True if the MNIST dataset is not downloaded
 
-    params: dict
+    params: Params
         params for the DataLoader
 
     Returns

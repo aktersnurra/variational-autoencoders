@@ -1,18 +1,19 @@
 {
-    "latent_dim": 50,
+    "input_dim": 784,
+    "latent_dim": 64,
     "hidden_dim": 4096,
     "hidden_height": 4,
     "hidden_width": 4,
-    "channels": [1, 64, 128, 256],
-    "kernel_size": [4, 3, 2, 3, 3, 2],
-    "strides": [2, 2, 1, 2, 3, 1],
-    "hidden_dim": [400, 20],
+    "channels": [1, 64, 128, 256, 128, 64, 1],
+    "kernel_size": [4, 3, 3, 3, 3, 2],
+    "stride": [2, 2, 1, 2, 3, 1],
     "learning_rate": 1e-4,
     "betas": [0.9, 0.999],
-    "esp": 1e-8,
+    "eps": 1e-8,
     "weight_decay": 0,
     "batch_size": 128,
-    "num_epochs": 100,
-    "save_summary_steps": 100,
-    "num_workers": 4
+    "num_epochs": 50,
+    "save_summary_steps": 256,
+    "num_workers": 4,
+    "num_examples_to_generate": 64
 }

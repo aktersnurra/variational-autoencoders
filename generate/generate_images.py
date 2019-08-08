@@ -1,12 +1,16 @@
 """Generate images with the Variational Autoencoder"""
 import os
 import sys
+import glob
 import argparse
+import imageio
 import logging
 import torch
 import torchvision
 import matplotlib.pyplot as plt
 from tensorboardX import SummaryWriter
+from datetime import datetime
+from PIL import Image
 
 sys.path.append("..")
 from utils import misc
@@ -29,6 +33,7 @@ def show_images(images):
     images = torchvision.utils.make_grid(images)
     show_image(images[0])
 
+
 def show_image(img):
     """Presents the generated images in a window.
 
@@ -46,9 +51,8 @@ def show_image(img):
     plt.show()
 
 
-def generate_images(model, dataloader, params):
-    log_dir = os.path.join(model_dir, 'runs')
-    misc.create_dir(log_dir)
+def generate_images(model, model_dir, dataloader, params):
+    log_dir = misc.create_log_dir(model_dir, generated_img=True)
     with torch.no_grad() and SummaryWriter(log_dir) as writer:
         for i, (test_batch, _) in enumerate(dataloader):
             # move to GPU if available
@@ -60,7 +64,37 @@ def generate_images(model, dataloader, params):
             if i % 31 == 0:
                 X_reconstructed = X_reconstructed.view(params.batch_size, 1, 28, 28).cpu()
                 images = torchvision.utils.make_grid(X_reconstructed)
-                writer.add_image("Generated_images", images, i)
+                writer.add_image("generated_images_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), images, i)
+
+
+def generate_and_save_images(model, epoch, test_input, img_dir):
+    X_reconstructed = model.sample(test_input)
+    X_reconstructed = X_reconstructed.cpu().detach()
+
+    images = torchvision.utils.make_grid(X_reconstructed)
+    filename = os.path.join(img_dir, 'image_at_epoch_{:04d}.png'.format(epoch))
+    torchvision.utils.save_image(images, filename)
+
+
+def generate_gif(img_dir, tbx_writer=None):
+    anim_file = os.path.join(img_dir, 'cvae.gif')
+    with imageio.get_writer(anim_file, mode='I', format='GIF', fps=5) as writer:
+        filenames = glob.glob(os.path.join(img_dir, 'image*.png'))
+        filenames = sorted(filenames)
+        last = -1
+        for i, filename in enumerate(filenames):
+            frame = 2 * (i ** 0.5)
+            if round(frame) > round(last):
+                last = frame
+            else:
+                continue
+            image = imageio.imread(filename)
+            writer.append_data(image)
+        image = imageio.imread(filename)
+        writer.append_data(image)
+    if tbx_writer:
+        gif_image = Image.open(anim_file)
+        tbx_writer.add_image("animated_mnist_generation" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), gif_image)
 
 
 if __name__=='__main__':
@@ -95,13 +129,17 @@ if __name__=='__main__':
     dataloaders = data_loader.fetch_dataloader(types=['test'], data_dir=data_dir, download=False, params=params)
     test_dl = dataloaders['test']
 
-    # Define the model and optimizer
-    if 'vae' in args.model_dir:
+    # Fetch the model
+    if args.model_dir.split('/')[-1] == 'vae':
         from model.VAE.variational_autoencoder import VariationalAutoencoder
+    elif args.model_dir.split('/')[-1] == 'vae_w_bn':
+        from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
+    elif args.model_dir.split('/')[-1] == 'convolutional':
+        from model.convolutional_VAE import VariationalAutoencoder
 
     model = VariationalAutoencoder(params).cuda() if params.cuda else VariationalAutoencoder(params)
     # Reload weights from the saved file
     misc.load_checkpoint(os.path.join(root, args.model_dir, args.restore_file + '.pth.tar'), model)
     # Generate images
     logging.info("\nGenerating images.\n")
-    generate_images(model, test_dl, params)
+    generate_images(model, model_dir, test_dl, params)

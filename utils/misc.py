@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import shutil
+from datetime import datetime
+from prettytable import PrettyTable
 
 import torch
 from torch import nn
@@ -163,15 +165,29 @@ def initialize_weights(*models):
                 module.bias.data.zero_()
 
 
-def tab_printer(args):
+def tab_printer(args, title):
+    t = PrettyTable()
     args = vars(args)
     keys = sorted(args.keys())
-    t = Texttable()
-    t.add_rows([["Parameter", "Value"]] + [[k.replace("_", " ").capitalize(), args[k]] for k in keys])
-    print(t.draw())
+    t.title = title
+    t.field_names = ["Parameter", "Value"]
+    for k in keys:
+        t.add_row([k.replace("_", " ").capitalize(), args[k]])
+    print("\n")
+    print(t)
 
 
 def create_dir(dir):
     if not os.path.isdir(dir):
         os.mkdir(dir)
+
+
+def create_log_dir(model_dir, run, generated_img=None):
+    run_dir = os.path.join(model_dir, 'runs')
+    create_dir(run_dir)
+    if generated_img:
+        run = 'generated_images_' + run
+    log_dir = os.path.join(run_dir, run)
+    create_dir(log_dir)
+    return log_dir
 

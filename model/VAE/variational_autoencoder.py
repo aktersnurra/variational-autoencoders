@@ -8,9 +8,9 @@ class InferenceNetwork(nn.Module):
     def __init__(self, params):
         super(InferenceNetwork, self).__init__()
         self.params = params
-        self.fc = nn.Linear(in_features=self.params.input_dim, out_features=self.params.hidden_dim[0])
-        self.fc_mu = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.hidden_dim[1])
-        self.fc_logvar = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.hidden_dim[1])
+        self.fc = nn.Linear(in_features=self.params.input_dim, out_features=self.params.hidden_dim)
+        self.fc_mu = nn.Linear(in_features=self.params.hidden_dim, out_features=self.params.latent_dim)
+        self.fc_logvar = nn.Linear(in_features=self.params.hidden_dim, out_features=self.params.latent_dim)
         self.activation_fn = GELU()
         initialize_weights(self)
 
@@ -26,8 +26,8 @@ class GenerativeNetwork(nn.Module):
     def __init__(self, params):
         super(GenerativeNetwork, self).__init__()
         self.params = params
-        self.fc1 = nn.Linear(in_features=self.params.hidden_dim[1], out_features=self.params.hidden_dim[0])
-        self.fc2 = nn.Linear(in_features=self.params.hidden_dim[0], out_features=self.params.input_dim)
+        self.fc1 = nn.Linear(in_features=self.params.latent_dim, out_features=self.params.hidden_dim)
+        self.fc2 = nn.Linear(in_features=self.params.hidden_dim, out_features=self.params.input_dim)
         self.activation_fn = GELU()
         initialize_weights(self)
 
@@ -44,17 +44,29 @@ class VariationalAutoencoder(nn.Module):
         self.inference_network = InferenceNetwork(params=params)
         self.generative_network = GenerativeNetwork(params=params)
 
+    def sample(self, eps=None):
+        if eps is None:
+            eps = torch.randn(torch.Size([1, self.params.hidden_dim]))
+        return self.decode(eps).view(self.params.num_examples_to_generate, 1, 28, 28)
+
     @staticmethod
-    def _reparameterization(mu, logvar):
+    def reparameterization(mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         z = mu + eps * std
         return z
 
-    def forward(self, x):
+    def encode(self, x):
         mu, logvar = self.inference_network(x)
-        z = self._reparameterization(mu, logvar)
-        x_reconstructed = self.generative_network(z)
-        return x_reconstructed, mu, logvar
+        return mu, logvar
+
+    def decode(self, z):
+        return self.generative_network(z)
+
+    def forward(self, x):
+        mu, logvar = self.encode(x)
+        z = self.reparameterization(mu, logvar)
+        x_reconstructed = self.decode(z)
+        return x_reconstructed, mu, logvar, z
 
 

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.distributions.normal import Normal
 
 from utils import initialize_weights
 from utils.gelu import GELU
@@ -12,9 +11,9 @@ class Flatten(nn.Module):
 
 
 class UnFlatten(nn.Module):
-    def __init__(self, channel, height, width):
+    def __init__(self, channels, height, width):
         super(UnFlatten, self).__init__()
-        self.channel = channel
+        self.channels = channels
         self.height = height
         self.width = width
 
@@ -24,7 +23,7 @@ class UnFlatten(nn.Module):
 
 class InferenceNetwork(nn.Module):
     def __init__(self, params):
-        super(InferenceNetwork).__init__()
+        super(InferenceNetwork, self).__init__()
         self.params = params
 
         inference_layers = [
@@ -66,21 +65,14 @@ class InferenceNetwork(nn.Module):
 
 
 class GenerativeNetwork(nn.Module):
-    def __init__(self, params, heigth=4, width=4):
-        super(GenerativeNetwork).__init__()
+    def __init__(self, params, height=4, width=4):
+        super(GenerativeNetwork, self).__init__()
         self.params = params
-        self.sigmoid = nn.Sigmoid()
 
         generative_layers = [
             nn.Linear(in_features=self.params.latent_dim, out_features=self.params.hidden_dim),
             GELU(),
-            UnFlatten(self.params.channels[3], heigth, width),
-            nn.ConvTranspose2d(in_channels=self.params.channels[2],
-                               out_channels=self.params.channels[3],
-                               kernel_size=self.params.kernel_size[2],
-                               stride=self.params.stride[2]),
-            nn.BatchNorm2d(self.params.channels[3]),
-            GELU(),
+            UnFlatten(self.params.channels[3], height, width),
             nn.ConvTranspose2d(in_channels=self.params.channels[3],
                                out_channels=self.params.channels[4],
                                kernel_size=self.params.kernel_size[3],
@@ -91,19 +83,22 @@ class GenerativeNetwork(nn.Module):
                                out_channels=self.params.channels[5],
                                kernel_size=self.params.kernel_size[4],
                                stride=self.params.stride[4]),
+            nn.BatchNorm2d(self.params.channels[5]),
+            GELU(),
+            nn.ConvTranspose2d(in_channels=self.params.channels[5],
+                               out_channels=self.params.channels[6],
+                               kernel_size=self.params.kernel_size[5],
+                               stride=self.params.stride[5]),
+            nn.Sigmoid(),
         ]
 
         self.decoder = nn.Sequential(*generative_layers)
 
         initialize_weights(self)
 
-    def forward(self, z, apply_sigmoid=False):
-        logits = self.decoder(z)
-        if apply_sigmoid:
-            probs = self.sigmoid(logits)
-            return probs
-
-        return logits
+    def forward(self, z):
+        x_reconstructed = self.decoder(z)
+        return x_reconstructed
 
 
 class VariationalAutoencoder(nn.Module):
@@ -112,12 +107,11 @@ class VariationalAutoencoder(nn.Module):
         self.params = params
         self.inference_network = InferenceNetwork(params)
         self.generative_network = GenerativeNetwork(params)
-        self.normal = Normal(torch.tensor([0.0]), torch.tensor([1.0]))
 
     def sample(self, eps=None):
         if eps is None:
-            eps = self.normal.sample(torch.Size([1, self.params.hidden_dim]))
-        return self.decode(eps, apply_sigmoid=True)
+            eps = torch.randn(torch.Size([1, self.params.hidden_dim]))
+        return self.decode(eps)
 
     @staticmethod
     def reparameterization(mu, logvar):
@@ -130,8 +124,12 @@ class VariationalAutoencoder(nn.Module):
         mu, logvar = self.inference_network(x)
         return mu, logvar
 
-    def decode(self, z, apply_sigmoid=False):
-        return self.generative_network(z, apply_sigmoid)
+    def decode(self, z):
+        return self.generative_network(z)
 
-
+    def forward(self, x):
+        mu, logvar = self.encode(x)
+        z = self.reparameterization(mu, logvar)
+        x_reconstructed = self.decode(z)
+        return x_reconstructed, mu, logvar, z
 
