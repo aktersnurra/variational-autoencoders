@@ -117,7 +117,7 @@ experiments/vae/*
 !experiments/vae/params.json
 
 !experiments/vae/runs
-experiments/vae/runs/*/*
+experiments/vae/runs/*
 
 !experiments/vae/runs/*/generated_images
 experiments/vae/runs/*/generated_images/*
@@ -130,12 +130,12 @@ experiments/vae/runs/*/generated_images/test/*
 !experiments/vae/runs/*/generated_images/test/ground_truth
 experiments/vae/runs/*/generated_images/test/ground_truth/*
 !experiments/vae/runs/*/generated_images/test/ground_truth/image_at_iter_000067.png
-!experiments/vae/runs/*/reconstructed/test/ground_truth/*.gif
+!experiments/vae/runs/*/reconstructed/test/ground_truth/ground_truth.gif
 
 !experiments/vae/runs/*/generated_images/test/reconstructed
 experiments/vae/runs/*/generated_images/test/reconstructed/*
 !experiments/vae/runs/*/generated_images/test/reconstructed/image_at_iter_000067.png
-!experiments/vae/runs/*/reconstructed/test/reconstructed/*.gif
+!experiments/vae/runs/*/reconstructed/test/reconstructed/reconstructed.gif
 
 
 !experiments/vae_w_bn
