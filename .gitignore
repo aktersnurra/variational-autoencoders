@@ -119,6 +119,9 @@ experiments/vae/*
 !experiments/vae/runs
 experiments/vae/runs/*
 
+!experiments/vae/runs/*
+experiments/vae/runs/*/*
+
 !experiments/vae/runs/*/generated_images
 experiments/vae/runs/*/generated_images/*
 
@@ -163,6 +166,9 @@ experiments/convolutional/*
 
 !experiments/convolutional/runs
 experiments/convolutional/runs/*
+
+!experiments/convolutional/runs/*
+experiments/convolutional/runs/*/*
 
 !experiments/convolutional/runs/*/generated_images
 experiments/convolutional/runs/*/generated_images/*
