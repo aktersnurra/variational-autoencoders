@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 
 # add top-level in order to access utils folder
 sys.path.append("..")
-from utils.parser import argument_parser
+from utils.parsers import train_argument_parser
 from utils.misc import create_dir, create_log_dir, load_checkpoint, save_checkpoint, tab_printer, Params, set_logger
 from generate.generate_images import generate_and_save_images, generate_gif
 
@@ -54,13 +54,13 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
             load_checkpoint(restore_path, model, optimizer)
 
         # number of iterations
-        j = 0
+        iterations = 0
         # Use tqdm progress bar for number of epochs
         for epoch in tqdm(range(params.num_epochs), desc="Epochs: ", leave=True):
             # Track the progress of the training batches
             training_progressor = trange(len(dataloader), desc="Loss")
             for i in training_progressor:
-                j += 1
+                iterations += 1
                 # Fetch next batch of training samples
                 train_batch, _ = next(iter(dataloader))
 
@@ -87,14 +87,14 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
                     # Log values and gradients of the model parameters (histogram summary)
                     for tag, value in model.named_parameters():
                         tag = tag.replace('.', '/')
-                        writer.add_histogram(tag, value.cpu().data.numpy(), j)
-                        writer.add_histogram(tag + '/grad', value.grad.cpu().data.numpy(), j)
+                        writer.add_histogram(tag, value.cpu().data.numpy(), iterations)
+                        writer.add_histogram(tag + '/grad', value.grad.cpu().data.numpy(), iterations)
 
                 # Compute the loss for each iteration
                 summary_batch = losses
                 # log loss and/or other metrics to the writer
                 for tag, value in summary_batch.items():
-                    writer.add_scalar(tag, value.item(), j)
+                    writer.add_scalar(tag, value.item(), iterations)
 
                 # update the average loss
                 training_progressor.set_description("VAE (Loss=%g)" % round(loss.item(), 4))
@@ -109,12 +109,13 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
                                  'state_dict': model.state_dict(),
                                  'optim_dict': optimizer.state_dict()},
                                 is_best=True,
-                                checkpoint=model_dir)
+                                checkpoint=log_dir,
+                                datetime=run)
 
 
         logging.info("\n\nTraining Completed.\n\n")
 
-        logging.info("Creating gif of generated images.\n")
+        logging.info("Creating gif of images generated with gaussian latent vectors.\n")
         generate_gif(img_dir, writer)
 
 
@@ -123,7 +124,7 @@ if __name__ == '__main__':
     root = os.path.abspath('..')
 
     # arguments for the training script
-    args = argument_parser()
+    args = train_argument_parser()
 
     # Load the parameters from json file
     model_dir = os.path.join(root, args.model_dir)
@@ -166,7 +167,6 @@ if __name__ == '__main__':
 
     elif args.model_dir.split('/')[-1] == 'convolutional':
         from model.convolutional_VAE import VariationalAutoencoder
-
         reshape = False
 
     # Fetch the loss

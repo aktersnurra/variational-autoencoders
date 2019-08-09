@@ -1,3 +1,3 @@
 from .misc import *
 from .gelu import *
-from .parser import *
+from .parsers import *

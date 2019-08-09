@@ -7,8 +7,8 @@
     "eps": 1e-8,
     "weight_decay": 0,
     "batch_size": 128,
-    "num_epochs": 50,
-    "save_summary_steps": 256,
+    "num_epochs": 30,
+    "save_summary_steps": 100,
     "num_workers": 6,
     "num_examples_to_generate": 64
 }
