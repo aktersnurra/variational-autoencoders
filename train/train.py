@@ -15,7 +15,7 @@ from utils.misc import create_dir, create_log_dir, load_checkpoint, save_checkpo
 from generate.generate_images import generate_and_save_images, generate_gif
 
 
-def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, restore_file=None):
+def train(model, dataloader, dl_type, optimizer, loss_fn, params, model_dir, reshape, restore_file=None):
     """
     Train the model on `num_steps` batches
 
@@ -23,6 +23,7 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
     ----------
     model
     dataloader
+    dl_type
     optimizer
     loss_fn
     params
@@ -62,7 +63,10 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
             for i in training_progressor:
                 iterations += 1
                 # Fetch next batch of training samples
-                train_batch, _ = next(iter(dataloader))
+                if dl_type == 'orl_face':
+                    train_batch = next(iter(dataloader))
+                else:
+                    train_batch, _ = next(iter(dataloader))
 
                 # move to GPU if available
                 if params.cuda:
@@ -71,6 +75,7 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
                 # compute model output and loss
                 if reshape:
                     train_batch = train_batch.view(-1, params.input_dim)
+
                 X_reconstructed, mu, logvar, z = model(train_batch)
                 losses = loss_fn(train_batch, X_reconstructed, mu, logvar, z, params.use_mse)
                 loss = losses['loss']
@@ -112,7 +117,6 @@ def train(model, dataloader, optimizer, loss_fn, params, model_dir, reshape, res
                                 checkpoint=log_dir,
                                 datetime=run)
 
-
         logging.info("\n\nTraining Completed.\n\n")
 
         logging.info("Creating gif of images generated with gaussian latent vectors.\n")
@@ -148,26 +152,34 @@ if __name__ == '__main__':
     # Create the input data pipeline
     logging.info("\nLoading the datasets...")
 
+    data_dir = os.path.join(root, args.data_dir)
     # fetch dataloaders
     if args.dataloader == 'mnist':
         import data_loaders.mnist_data_loader as data_loader
+        dataloaders = data_loader.fetch_dataloader(types=['train'], data_dir=data_dir, download=False, params=params)
 
-    # types, data_dir, download, params
-    data_dir = os.path.join(root, args.data_dir)
-    dataloaders = data_loader.fetch_dataloader(types=['train'], data_dir=data_dir, download=False, params=params)
-    train_dl = dataloaders['train']
+        reshape = True
+        # Fetch the model and loss function
+        if args.model_dir.split('/')[-1] == 'vae':
+            from model.VAE.variational_autoencoder import VariationalAutoencoder
 
-    reshape = True
-    # Fetch the model and loss function
-    if args.model_dir.split('/')[-1] == 'vae':
-        from model.VAE.variational_autoencoder import VariationalAutoencoder
+        elif args.model_dir.split('/')[-1] == 'vae_w_bn':
+            from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
 
-    elif args.model_dir.split('/')[-1] == 'vae_w_bn':
-        from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
+        elif args.model_dir.split('/')[-1] == 'convolutional':
+            from model.convolutional_VAE import VariationalAutoencoder
 
-    elif args.model_dir.split('/')[-1] == 'convolutional':
-        from model.convolutional_VAE import VariationalAutoencoder
+            reshape = False
+
+    elif args.dataloader == 'orl_face':
+        import data_loaders.orl_data_loader as data_loader
+        dataloaders = data_loader.fetch_dataloader(types=['train'], data_dir=data_dir, params=params)
+
+        # fetch model
         reshape = False
+        from model.face_conv_VAE import VariationalAutoencoder
+
+    train_dl = dataloaders['train']
 
     # Fetch the loss
     from model.loss_functions.loss_function import loss_function
@@ -187,4 +199,4 @@ if __name__ == '__main__':
                            weight_decay=params.weight_decay)
 
     # Train the model
-    train(model, train_dl, optimizer, loss_fn, params, model_dir, reshape, args.restore_file)
+    train(model, train_dl, args.dataloader, optimizer, loss_fn, params, model_dir, reshape, args.restore_file)

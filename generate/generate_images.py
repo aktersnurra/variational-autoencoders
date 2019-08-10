@@ -66,7 +66,7 @@ def generate_images(model, model_dir, dataloader, params):
                 writer.add_image("generated_images_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), images, i)
 
 
-def reconstruct_images_form_test_set(model, dataloader, params, log_dir, reshape):
+def reconstruct_images_form_test_set(model, dataloader, dl_type, params, log_dir, reshape):
     # set model to evaluation mode
     model.eval()
 
@@ -83,7 +83,12 @@ def reconstruct_images_form_test_set(model, dataloader, params, log_dir, reshape
     with torch.no_grad() and SummaryWriter(tf_logger) as writer:
         training_progressor = trange(len(dataloader), desc="Reconstructing Test Set")
         for i in training_progressor:
-            test_batch, _ = next(iter(dataloader))
+
+            if dl_type == 'orl_face':
+                test_batch = next(iter(dataloader))
+            else:
+                test_batch, _ = next(iter(dataloader))
+
             # move to GPU if available
             if params.cuda:
                 test_batch = test_batch.cuda()
@@ -180,24 +185,38 @@ if __name__=='__main__':
     logging.info("\nLoading the datasets...")
 
     # fetch dataloaders
+    data_dir = os.path.join(root, args.data_dir)
+    # fetch dataloaders
     if args.dataloader == 'mnist':
         import data_loaders.mnist_data_loader as data_loader
 
-    # types, data_dir, download, params
-    data_dir = os.path.join(root, args.data_dir)
-    dataloaders = data_loader.fetch_dataloader(types=['test'], data_dir=data_dir, download=False, params=params)
-    test_dl = dataloaders['test']
+        dataloaders = data_loader.fetch_dataloader(types=['test'], data_dir=data_dir, download=False, params=params)
 
-    # If output needs to be reshaped into an image
-    reshape = True
-    # Fetch the model
-    if args.model_dir.split('/')[-1] == 'vae':
-        from model.VAE.variational_autoencoder import VariationalAutoencoder
-    elif args.model_dir.split('/')[-1] == 'vae_w_bn':
-        from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
-    elif args.model_dir.split('/')[-1] == 'convolutional':
-        from model.convolutional_VAE import VariationalAutoencoder
+        # If output needs to be reshaped into an image
+        reshape = True
+
+        # Fetch the model and loss function
+        if args.model_dir.split('/')[-1] == 'vae':
+            from model.VAE.variational_autoencoder import VariationalAutoencoder
+
+        elif args.model_dir.split('/')[-1] == 'vae_w_bn':
+            from model.VAE_w_BN.variational_autoencoder import VariationalAutoencoder
+
+        elif args.model_dir.split('/')[-1] == 'convolutional':
+            from model.convolutional_VAE import VariationalAutoencoder
+
+            reshape = False
+
+    elif args.dataloader == 'orl_face':
+        import data_loaders.orl_data_loader as data_loader
+
+        dataloaders = data_loader.fetch_dataloader(types=['test'], data_dir=data_dir, params=params)
+
+        # fetch model
         reshape = False
+        from model.face_conv_VAE import VariationalAutoencoder
+
+    test_dl = dataloaders['test']
 
     model = VariationalAutoencoder(params).cuda() if params.cuda else VariationalAutoencoder(params)
     # Reload weights from the saved file
@@ -209,7 +228,7 @@ if __name__=='__main__':
         generate_images(model, model_dir, test_dl, params)
     elif args.generate == 'test':
         logging.info("\nReconstruct images form test set\n")
-        reconstruct_images_form_test_set(model, test_dl, params, log_dir, reshape)
+        reconstruct_images_form_test_set(model, test_dl, args.dataloader, params, log_dir, reshape)
     else:
         NotImplementedError("Generation not implemented, use gif or test.")
 
