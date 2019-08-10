@@ -199,3 +199,6 @@ experiments/convolutional/runs/*/generated_images/test/reconstructed/*
 !experiments/convolutional/runs/*/generated_images/test/reconstructed/reconstructed.gif
 
 
+!experiments/orl_conv_vae/runs/*/generated_images/test/reconstructed/reconstructed.gif
+
+
